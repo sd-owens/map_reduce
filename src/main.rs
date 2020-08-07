@@ -114,8 +114,8 @@ fn main() {
     // Change the following code to create 2 threads each of which must use map_data()
     // function to process one of the two partition
 
-    intermediate_sums.push(map_data(&xs[0]));
-    intermediate_sums.push(map_data(&xs[1]));
+    let t1 = thread::spawn(||intermediate_sums.push(map_data(&xs[0])));
+    let t2 = thread::spawn(||intermediate_sums.push(map_data(&xs[1])));
 
     // CHANGE CODE END: Don't change any code below this line until the next CHANGE CODE comment
 
