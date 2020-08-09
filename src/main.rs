@@ -1,4 +1,5 @@
 use std::thread;
+use std::thread::JoinHandle;
 use std::env; // to get arugments passed to the program
 
 /*
@@ -102,7 +103,7 @@ fn main() {
 
     // PARTITION STEP: partition the data into 2 partitions
     let xs = partition_data_in_two(&v);
-
+    
     // Print info about the partitions
     print_partition_info(&xs);
 
@@ -114,7 +115,11 @@ fn main() {
 
     // Change the following code to create 2 threads each of which must use map_data()
     // function to process one of the two partition
-    
+
+/**********************************************************************************************/
+/*  ITEM: 1 MODIFIED CODE FOR 2 THREADS USING MAP DATA                                        */        
+/**********************************************************************************************/ 
+
     let v1 = xs[0].clone();
     let t1 = thread::spawn(move || map_data(&v1));
     intermediate_sums.push(t1.join().unwrap());
@@ -122,6 +127,8 @@ fn main() {
     let v2 = xs[1].clone();
     let t2 = thread::spawn(move || map_data(&v2));
     intermediate_sums.push(t2.join().unwrap());
+
+/**********************************************************************************************/    
 
     // CHANGE CODE END: Don't change any code below this line until the next CHANGE CODE comment
 
@@ -133,14 +140,56 @@ fn main() {
     println!("Sum = {}", sum);
 
     // CHANGE CODE: Add code that does the following:
+
+/**********************************************************************************************/
+/*  ITEM: 2 MODIFIED CODE FOR X NUM THREADS USING MAP DATA                                    */        
+/**********************************************************************************************/
     
     // 1. Calls partition_data to partition the data into equal partitions
+
+    let ys = partition_data(num_partitions, &v);
+
     // 2. Calls print_partiion_info to print info on the partitions that have been created
+    
+    print_partition_info(&ys);
+
     // 3. Creates one thread per partition and uses each thread to process one partition
+
+    let mut threads : Vec<JoinHandle<usize>> = Vec::new();
+
+    for r in 0..num_partitions{
+
+        let clone = ys[r].clone();
+
+        threads.push(thread::spawn(move || map_data(&clone)));
+
+    }
+
     // 4. Collects the intermediate sums from all the threads
+
+    // Clear vector for reuse in variable partition calculation
+    intermediate_sums.clear();
+
+    for handle in threads.into_iter() {
+
+        let value = handle.join().unwrap();
+
+        intermediate_sums.push(value);
+    }
+
+
+    
     // 5. Prints information about the intermediate sums
+
+    println!("Intermediate sums = {:?}", intermediate_sums);
+
     // 5. Calls reduce_data to process the intermediate sums
+
+    let sum = reduce_data(&intermediate_sums);
+   
     // 6. Prints the final sum computed by reduce_data
+
+    println!("Sum = {}", sum);
 
 }
 
@@ -159,8 +208,48 @@ fn main() {
 * @return A vector that contains vectors of integers
 * 
 */
-fn partition_data(_num_partitions: usize, v: &Vec<usize>) -> Vec<Vec<usize>>{
+fn partition_data(num_partitions: usize, v: &Vec<usize>) -> Vec<Vec<usize>>{
     // Remove the following line which has been added to remove a compiler error
-    partition_data_in_two(v)
+
+    let mut partition_size = 0;
+    let mut last_partition_size = 0;
+
+    if v.len() % num_partitions == 0 {
+
+        partition_size = v.len() / num_partitions;
+        last_partition_size = partition_size;
+
+    } else {
+
+        partition_size = v.len() / num_partitions;
+        last_partition_size = v.len() % num_partitions;
+
+    }
+
+    let mut xs: Vec<Vec<usize>> = Vec::new();
+
+    let mut j = 0;
+    let mut k = partition_size;
+
+    for _ in 0..num_partitions{
+
+        let mut x1 : Vec<usize> = Vec::new();
+
+        for i in j..k {
+
+            x1.push(v[i]);
+        }
+        xs.push(x1);
+        j += partition_size;
+        k += partition_size;
+
+        if k > v.len(){
+            k -= partition_size;
+            k += last_partition_size;
+        }
+
+    }
+
+    xs
 }
 
