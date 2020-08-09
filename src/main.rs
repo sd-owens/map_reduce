@@ -1,3 +1,4 @@
+use std::thread;
 use std::env; // to get arugments passed to the program
 
 /*
@@ -113,9 +114,14 @@ fn main() {
 
     // Change the following code to create 2 threads each of which must use map_data()
     // function to process one of the two partition
+    
+    let v1 = xs[0].clone();
+    let t1 = thread::spawn(move || map_data(&v1));
+    intermediate_sums.push(t1.join().unwrap());
 
-    let t1 = thread::spawn(||intermediate_sums.push(map_data(&xs[0])));
-    let t2 = thread::spawn(||intermediate_sums.push(map_data(&xs[1])));
+    let v2 = xs[1].clone();
+    let t2 = thread::spawn(move || map_data(&v2));
+    intermediate_sums.push(t2.join().unwrap());
 
     // CHANGE CODE END: Don't change any code below this line until the next CHANGE CODE comment
 
@@ -127,6 +133,7 @@ fn main() {
     println!("Sum = {}", sum);
 
     // CHANGE CODE: Add code that does the following:
+    
     // 1. Calls partition_data to partition the data into equal partitions
     // 2. Calls print_partiion_info to print info on the partitions that have been created
     // 3. Creates one thread per partition and uses each thread to process one partition
@@ -152,7 +159,7 @@ fn main() {
 * @return A vector that contains vectors of integers
 * 
 */
-fn partition_data(num_partitions: usize, v: &Vec<usize>) -> Vec<Vec<usize>>{
+fn partition_data(_num_partitions: usize, v: &Vec<usize>) -> Vec<Vec<usize>>{
     // Remove the following line which has been added to remove a compiler error
     partition_data_in_two(v)
 }
