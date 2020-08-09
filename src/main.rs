@@ -147,19 +147,19 @@ fn main() {
     
     // 1. Calls partition_data to partition the data into equal partitions
 
-    let ys = partition_data(num_partitions, &v);
+    let my_xs = partition_data(num_partitions, &v);
 
     // 2. Calls print_partiion_info to print info on the partitions that have been created
     
-    print_partition_info(&ys);
+    print_partition_info(&my_xs);
 
     // 3. Creates one thread per partition and uses each thread to process one partition
 
     let mut threads : Vec<JoinHandle<usize>> = Vec::new();
 
-    for r in 0..num_partitions{
+    for i in 0..num_partitions{
 
-        let clone = ys[r].clone();
+        let clone = my_xs[i].clone();
 
         threads.push(thread::spawn(move || map_data(&clone)));
 
@@ -170,15 +170,15 @@ fn main() {
     // Clear vector for reuse in variable partition calculation
     intermediate_sums.clear();
 
+    // Interate through handles with "into_iter" for force transfer of ownership to variable
     for handle in threads.into_iter() {
 
         let value = handle.join().unwrap();
 
+        // Push results of map_date returned from handle into intermediate sums.
         intermediate_sums.push(value);
     }
 
-
-    
     // 5. Prints information about the intermediate sums
 
     println!("Intermediate sums = {:?}", intermediate_sums);
@@ -190,6 +190,8 @@ fn main() {
     // 6. Prints the final sum computed by reduce_data
 
     println!("Sum = {}", sum);
+
+/**********************************************************************************************/    
 
 }
 
@@ -209,11 +211,11 @@ fn main() {
 * 
 */
 fn partition_data(num_partitions: usize, v: &Vec<usize>) -> Vec<Vec<usize>>{
-    // Remove the following line which has been added to remove a compiler error
 
-    let mut partition_size = 0;
-    let mut last_partition_size = 0;
+    let mut partition_size;
+    let mut last_partition_size;
 
+    // data to be partitioned is exactly divisible by num_partitions
     if v.len() % num_partitions == 0 {
 
         partition_size = v.len() / num_partitions;
@@ -221,25 +223,48 @@ fn partition_data(num_partitions: usize, v: &Vec<usize>) -> Vec<Vec<usize>>{
 
     } else {
 
+        let remainder = v.len() % num_partitions;
         partition_size = v.len() / num_partitions;
-        last_partition_size = v.len() % num_partitions;
+        
+        // Gap is amount to add to remainder to be divisiable equally across all partitions
+        let gap = num_partitions - remainder;
+        // Sum of gap and remainder is what we have available ti redistribute
+        let mut redistributable = remainder + gap;
+
+        // Subtract gap from last partition for redistro across all partitions
+        last_partition_size = partition_size - gap;
+    
+        // Find amount to equally divide across all partitions
+        redistributable = redistributable / num_partitions;
+
+        // Add that amount equally across all partitions
+        partition_size += redistributable;
+        last_partition_size += redistributable;
 
     }
 
-    let mut xs: Vec<Vec<usize>> = Vec::new();
+    let mut my_xs: Vec<Vec<usize>> = Vec::new();
 
+    // Vars for setting partition sizes of sub vectors.
     let mut j = 0;
     let mut k = partition_size;
 
+    // Interate through partitions creating sub vectors within my_xs
     for _ in 0..num_partitions{
 
-        let mut x1 : Vec<usize> = Vec::new();
+        let mut x : Vec<usize> = Vec::new();
 
+        // 1st iteration is 0 (inclusive) to partition_size (exclusive)
+        // 2nd iteration is partition_size (inclusive) to partition_size (exclusive)
+        // ...
+        // Last itr is partition_size (inclusive) to last_partition size (exclusive)
         for i in j..k {
 
-            x1.push(v[i]);
+            x.push(v[i]);
         }
-        xs.push(x1);
+        my_xs.push(x);
+
+        // Update variables j and k based on position
         j += partition_size;
         k += partition_size;
 
@@ -247,9 +272,6 @@ fn partition_data(num_partitions: usize, v: &Vec<usize>) -> Vec<Vec<usize>>{
             k -= partition_size;
             k += last_partition_size;
         }
-
     }
-
-    xs
+    my_xs
 }
-
