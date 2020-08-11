@@ -142,7 +142,7 @@ fn main() {
     // CHANGE CODE: Add code that does the following:
 
 /**********************************************************************************************/
-/*  ITEM: 2 MODIFIED CODE FOR X NUM THREADS USING MAP DATA                                    */        
+/*  ITEM: 2 MODIFIED CODE FOR X NUM PARTITIONS USING MAP DATA (X = args[1])                   */        
 /**********************************************************************************************/
     
     // 1. Calls partition_data to partition the data into equal partitions
